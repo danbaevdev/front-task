@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { store } from '@/store'
+import AppNumericField from "@/ui/shared/AppNumericField.vue";
 
 const route = useRoute()
 
@@ -10,9 +11,9 @@ const person = computed(() => {
   return store.people.find((p) => p.id === id)
 })
 
-function updateAge(value: string) {
+function updateAge(value: number) {
   if (person.value) {
-    person.value.ageInHours = Number(value) || 0
+    person.value.ageInHours = value
   }
 }
 </script>
@@ -21,29 +22,16 @@ function updateAge(value: string) {
   <div v-if="person" class="flex flex-col gap-4">
     <router-link to="/" class="text-violet-600 hover:underline text-sm">&larr; Back</router-link>
 
-    <div class="flex items-center gap-3">
-      <img
-        src="/img.png"
-        :alt="person.name"
-        class="w-14 h-14 rounded-full border-2 border-violet-500 object-cover"
-      />
-      <div>
-        <label for="hours-input" class="block text-sm font-bold tracking-wide text-gray-700">
-          {{ person.name.toUpperCase() }} IS
-        </label>
-        <div class="flex items-center gap-2">
-          <input
-            id="hours-input"
-            type="text"
-            :value="person.ageInHours"
-            @input="updateAge(($event.target as HTMLInputElement).value)"
-            class="border border-gray-300 rounded px-2 py-1 text-lg outline-none"
-            placeholder="0"
-          />
-          <span class="text-gray-600">hours old</span>
-        </div>
-      </div>
-    </div>
+    <AppNumericField
+      v-model="person.ageInHours"
+      @update:modelValue="updateAge"
+      :avatarUrl="'/img.png'"
+      :label="person.name"
+      suffix="hours old"
+      placeholder="0"
+      :minWidth="72"
+      inputId="hours-input"
+    />
   </div>
 
   <div v-else>
