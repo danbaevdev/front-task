@@ -101,7 +101,7 @@ const updateMeasuredWidth = () => {
 
   nextTick(() => {
     const width = measureRef.value?.offsetWidth || 0
-    measuredWidth.value = Math.max(props.minWidth, width + 1)
+    measuredWidth.value = Math.max(props.minWidth, width + 2)
   })
 }
 
