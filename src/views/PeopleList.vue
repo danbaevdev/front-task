@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { store } from '@/store'
+import {formatWithSpaces} from "../utils/formatNumber.ts";
 
 const peopleWithYears = computed(() => {
   return store.people.map((person) => ({
@@ -28,7 +29,7 @@ const peopleWithYears = computed(() => {
         />
         <div>
           <div class="font-bold text-gray-700">{{ person.name }}</div>
-          <div class="text-gray-600">{{ person.ageInYears }} years old</div>
+          <div class="text-gray-600">{{ formatWithSpaces(person.ageInYears) }} years old</div>
         </div>
       </router-link>
     </div>
