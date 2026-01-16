@@ -48,7 +48,7 @@
           @keydown="handleKeyDown"
           @focus="handleFocus"
           @blur="handleBlur"
-          type="phone"
+          type="tel"
           inputmode="numeric"
           :id="inputId"
           :placeholder="placeholder"
@@ -96,10 +96,9 @@ const isFocused = ref(false)
 const internalValue = ref('')
 const measuredWidth = ref(props.minWidth)
 
-// Максимальное безопасное целое число в JavaScript
-const MAX_SAFE_INTEGER = 9007199254740991 // Number.MAX_SAFE_INTEGER
-// Максимальное количество цифр для этого числа
-const MAX_DIGITS = MAX_SAFE_INTEGER.toString().length // 16 цифр
+// The largest safe integer in JavaScript
+const MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER
+const MAX_DIGITS = MAX_SAFE_INTEGER.toString().length
 
 const updateMeasuredWidth = () => {
   if (!measureRef.value) return
@@ -140,19 +139,18 @@ const handleInput = (event: Event) => {
     newValue = newValue.substring(1)
   }
 
-  // Ограничиваем максимальным безопасным целым числом (16 цифр)
+  // Limit to maximum safe integer (16 digits)
   if (newValue.length > MAX_DIGITS) {
     newValue = newValue.substring(0, MAX_DIGITS)
   }
 
   internalValue.value = newValue
 
-  // Преобразуем в число, но проверяем границы
+  // Convert to a number, but check the bounds
   let numericValue = 0
   if (newValue) {
     const parsed = Number(newValue)
     if (!isNaN(parsed)) {
-      // Если число больше MAX_SAFE_INTEGER, ограничиваем им
       numericValue = parsed > MAX_SAFE_INTEGER ? MAX_SAFE_INTEGER : parsed
     }
   }

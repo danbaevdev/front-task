@@ -1,5 +1,5 @@
 /**
- * Форматирует число с разделением по 3 цифры через пробел
+ * Formats a number separated by 3 digits separated by spaces
  */
 export const formatWithSpaces = (value: number | string | undefined | null): string => {
   if (value === undefined || value === null || value === '') {
