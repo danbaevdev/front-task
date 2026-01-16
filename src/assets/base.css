@@ -1,1 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Koulen&family=Inter:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
+
+@layer base {
+  :root {
+    --color-primary: #3D06D7;
+    --color-primary-light: #906FEE;
+    --color-dark: #1E0E4C;
+    --color-light-gray: #CFCADF;
+  }
+}
+
+@theme {
+  --color-primary: #3D06D7;
+  --color-dark: #1E0E4C;
+  --color-primary-light: #906FEE;
+  --color-light-gray: #CFCADF;
+  --font-sans: 'Koulen', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+}

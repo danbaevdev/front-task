@@ -1,24 +1,21 @@
 <template>
   <div
-    class="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
+    class="flex items-center gap-4 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
     @click="focusInput"
     @focusin="handleFocus"
     @focusout="handleBlur"
     tabindex="-1"
   >
-    <!-- Аватар -->
     <div
       v-if="avatarUrl"
-      class="relative"
+      class="relative shrink-0"
     >
       <img
         :src="avatarUrl"
         :alt="label || 'avatar'"
-        class="w-14 h-14 rounded-full border-2 object-cover transition-all duration-200"
+        class="size-20 rounded-full object-cover transition-all duration-200"
         :class="[
-          isFocused
-            ? 'border-violet-500 ring-2 ring-violet-200 ring-offset-2'
-            : 'border-gray-300'
+          isFocused && 'ring ring-primary ring-offset-2'
         ]"
       />
     </div>
@@ -28,14 +25,21 @@
       <label
         v-if="label"
         :for="inputId"
-        class="block text-sm font-bold tracking-wide transition-colors duration-200 mb-1"
-        :class="isFocused ? 'text-violet-600' : 'text-gray-700'"
+        class="block transition-colors duration-200 mb-3"
+        :class="isFocused ? 'text-primary' : 'text-dark'"
       >
         {{ label.toUpperCase() }}
       </label>
 
-      <!-- Input с суффиксом -->
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3 relative">
+        <span
+          ref="measureRef"
+          class="invisible absolute whitespace-pre font-medium font-inter text-lg px-3 h-11 flex items-center pointer-events-none"
+          aria-hidden="true"
+        >
+          {{ displayValue || placeholder }}
+        </span>
+
         <!-- Input field -->
         <input
           ref="inputRef"
@@ -44,20 +48,19 @@
           @keydown="handleKeyDown"
           @focus="handleFocus"
           @blur="handleBlur"
-          :style="{ width: inputWidth + 'px' }"
-          type="text"
+          type="phone"
           inputmode="numeric"
           :id="inputId"
           :placeholder="placeholder"
-          class="font-medium text-gray-900 bg-white border border-gray-300 rounded px-3 py-2 outline-none transition-colors focus:border-violet-500 focus:ring-2 focus:ring-violet-100 flex-1 min-w-0"
+          :style="{ width: inputWidth + 'px', minWidth: minWidth + 'px' }"
+          class="font-medium font-inter text-lg text-gray-900 bg-white border border-gray-300 rounded-[6px] px-3 h-11 outline-none transition-colors focus:border-primary-light"
         />
 
-        <!-- Суффикс -->
         <span
           v-if="suffix"
-          class="text-gray-600 whitespace-nowrap"
+          class="text-dark font-inter whitespace-nowrap shrink-0"
         >
-          {{ suffix }}
+          {{ suffix.toLowerCase() }}
         </span>
       </div>
     </div>
@@ -65,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, nextTick, ref, watch, onMounted, onUnmounted } from 'vue'
 
 interface Props {
   modelValue: number
@@ -88,70 +91,71 @@ const emit = defineEmits<{
 }>()
 
 const inputRef = ref<HTMLInputElement | null>(null)
+const measureRef = ref<HTMLElement | null>(null)
 const isFocused = ref(false)
 const internalValue = ref('')
+const measuredWidth = ref(props.minWidth)
 
-// Инициализируем внутреннее значение
+const updateMeasuredWidth = () => {
+  if (!measureRef.value) return
+
+  nextTick(() => {
+    const width = measureRef.value?.offsetWidth || 0
+    measuredWidth.value = Math.max(props.minWidth, width + 1)
+  })
+}
+
 watch(() => props.modelValue, (newValue) => {
   internalValue.value = newValue.toString()
+  updateMeasuredWidth()
 }, { immediate: true })
 
-// Отформатированное значение для отображения
 const displayValue = computed(() => {
   if (!internalValue.value) return ''
   return internalValue.value.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
 })
-
-// Адаптивная ширина
 const inputWidth = computed(() => {
-  const valueLength = internalValue.value.length
-
-  if (valueLength === 0) return props.minWidth
-  if (valueLength <= 3) return props.minWidth
-  if (valueLength <= 6) return props.minWidth + (valueLength - 3) * 10
-  if (valueLength <= 9) return props.minWidth + 30 + (valueLength - 6) * 8
-
-  return Math.min(props.minWidth + 100, 300)
+  return measuredWidth.value
 })
 
-// Главная функция обработки ввода
+watch(displayValue, () => {
+  updateMeasuredWidth()
+})
+
 const handleInput = (event: Event) => {
   const target = event.target as HTMLInputElement
   const cursorPosition = target.selectionStart || 0
   const oldValue = internalValue.value
   const inputText = target.value
 
-  // Удаляем все нецифровые символы
   let newValue = inputText.replace(/\D/g, '')
 
-  // Если старое значение было "0" и новое начинается с "0" но это не просто "0"
   if (oldValue === '0' && newValue.startsWith('0') && newValue.length > 1) {
-    // Убираем первый ноль
     newValue = newValue.substring(1)
   }
 
-  // Преобразуем в число
-  const numericValue = newValue === '' ? 0 : parseInt(newValue, 10)
+  const MAX_DIGITS = 12
+  if (newValue.length > MAX_DIGITS) {
+    newValue = newValue.substring(0, MAX_DIGITS)
+  }
 
-  // Обновляем внутреннее значение
   internalValue.value = newValue
 
-  // Отправляем число
+  const numericValue = newValue === '' ? 0 : parseInt(newValue, 10)
+
   emit('update:modelValue', isNaN(numericValue) ? 0 : numericValue)
 
-  // Обновляем курсор
   nextTick(() => {
     updateCursorPosition(target, cursorPosition, inputText, newValue)
+    updateMeasuredWidth()
   })
 }
 
-// Функция обновления позиции курсора
 const updateCursorPosition = (target: HTMLInputElement, oldCursorPos: number, oldDisplayValue: string, newCleanValue: string) => {
   if (!inputRef.value) return
 
   const formattedValue = newCleanValue ? newCleanValue.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : ''
 
-  // Устанавливаем отформатированное значение
   inputRef.value.value = formattedValue
 
   if (!formattedValue) {
@@ -187,7 +191,6 @@ const updateCursorPosition = (target: HTMLInputElement, oldCursorPos: number, ol
   inputRef.value.setSelectionRange(newCursorPos, newCursorPos)
 }
 
-// Обработка клавиш
 const handleKeyDown = (event: KeyboardEvent) => {
   const target = event.target as HTMLInputElement
 
@@ -212,7 +215,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
   }
 }
 
-// Фокус
 const handleFocus = () => {
   isFocused.value = true
   nextTick(() => {
@@ -225,22 +227,38 @@ const handleFocus = () => {
   })
 }
 
-// Потеря фокуса
 const handleBlur = () => {
   isFocused.value = false
 }
 
-// Фокус на инпут при клике на всю область
 const focusInput = () => {
   if (inputRef.value) {
     inputRef.value.focus()
   }
 }
 
-// Метод для внешнего фокуса
 const focus = () => {
   inputRef.value?.focus()
 }
+
+let resizeObserver: ResizeObserver | null = null
+
+onMounted(() => {
+  updateMeasuredWidth()
+
+  if (measureRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      updateMeasuredWidth()
+    })
+    resizeObserver.observe(measureRef.value)
+  }
+})
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+  }
+})
 
 defineExpose({
   focus

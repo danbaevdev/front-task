@@ -26,7 +26,7 @@ function updateAge(value: number) {
       v-model="person.ageInHours"
       @update:modelValue="updateAge"
       :avatarUrl="'/img.png'"
-      :label="person.name"
+      :label="person.name + ' is'"
       suffix="hours old"
       placeholder="0"
       :minWidth="72"
