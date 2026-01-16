@@ -96,6 +96,11 @@ const isFocused = ref(false)
 const internalValue = ref('')
 const measuredWidth = ref(props.minWidth)
 
+// Максимальное безопасное целое число в JavaScript
+const MAX_SAFE_INTEGER = 9007199254740991 // Number.MAX_SAFE_INTEGER
+// Максимальное количество цифр для этого числа
+const MAX_DIGITS = MAX_SAFE_INTEGER.toString().length // 16 цифр
+
 const updateMeasuredWidth = () => {
   if (!measureRef.value) return
 
@@ -114,6 +119,7 @@ const displayValue = computed(() => {
   if (!internalValue.value) return ''
   return internalValue.value.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
 })
+
 const inputWidth = computed(() => {
   return measuredWidth.value
 })
@@ -134,14 +140,22 @@ const handleInput = (event: Event) => {
     newValue = newValue.substring(1)
   }
 
-  const MAX_DIGITS = 12
+  // Ограничиваем максимальным безопасным целым числом (16 цифр)
   if (newValue.length > MAX_DIGITS) {
     newValue = newValue.substring(0, MAX_DIGITS)
   }
 
   internalValue.value = newValue
 
-  const numericValue = newValue === '' ? 0 : parseInt(newValue, 10)
+  // Преобразуем в число, но проверяем границы
+  let numericValue = 0
+  if (newValue) {
+    const parsed = Number(newValue)
+    if (!isNaN(parsed)) {
+      // Если число больше MAX_SAFE_INTEGER, ограничиваем им
+      numericValue = parsed > MAX_SAFE_INTEGER ? MAX_SAFE_INTEGER : parsed
+    }
+  }
 
   emit('update:modelValue', isNaN(numericValue) ? 0 : numericValue)
 
